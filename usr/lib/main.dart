@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'dart:convert';
 
 void main() {
   runApp(const MyApp());
@@ -7,114 +11,275 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      debugShowCheckedModeBanner: false,
+      title: 'Military Reports App',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const HomeScreen(),
+        '/sitrep': (context) => const SitrepForm(),
+        '/locstat': (context) => const LocstatForm(),
+        '/casevec': (context) => const CasevecForm(),
+      },
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Military Reports'),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
+          children: [
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/sitrep'),
+              child: const Text('Create SITREP'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/locstat'),
+              child: const Text('Create LOCSTAT'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/casevec'),
+              child: const Text('Create CASEVEC'),
+            ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+}
+
+class SitrepForm extends StatefulWidget {
+  const SitrepForm({super.key});
+
+  @override
+  State<SitrepForm> createState() => _SitrepFormState();
+}
+
+class _SitrepFormState extends State<SitrepForm> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _summaryController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('SITREP Form'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              TextFormField(
+                controller: _dateController,
+                decoration: const InputDecoration(labelText: 'Date'),
+                validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _timeController,
+                decoration: const InputDecoration(labelText: 'Time'),
+                validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _locationController,
+                decoration: const InputDecoration(labelText: 'Location'),
+                validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _summaryController,
+                decoration: const InputDecoration(labelText: 'Situation Summary'),
+                maxLines: 5,
+                validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              ElevatedButton(
+                onPressed: _saveAndShare,
+                child: const Text('Save and Share'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveAndShare() async {
+    if (_formKey.currentState!.validate()) {
+      String content = 'SITREP\nDate: ${_dateController.text}\nTime: ${_timeController.text}\nLocation: ${_locationController.text}\nSummary: ${_summaryController.text}';
+      await _saveToFile('sitrep.txt', content);
+      await _shareFile('sitrep.txt');
+    }
+  }
+
+  Future<void> _saveToFile(String filename, String content) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$filename');
+    await file.writeAsString(content);
+  }
+
+  Future<void> _shareFile(String filename) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$filename');
+    await Share.shareXFiles([XFile(file.path)], text: 'Military Report');
+  }
+}
+
+class LocstatForm extends StatefulWidget {
+  const LocstatForm({super.key});
+
+  @override
+  State<LocstatForm> createState() => _LocstatFormState();
+}
+
+class _LocstatFormState extends State<LocstatForm> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _unitController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _statusController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('LOCSTAT Form'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              TextFormField(
+                controller: _unitController,
+                decoration: const InputDecoration(labelText: 'Unit'),
+                validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _locationController,
+                decoration: const InputDecoration(labelText: 'Location'),
+                validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _statusController,
+                decoration: const InputDecoration(labelText: 'Status'),
+                validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              ElevatedButton(
+                onPressed: _saveAndShare,
+                child: const Text('Save and Share'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveAndShare() async {
+    if (_formKey.currentState!.validate()) {
+      String content = 'LOCSTAT\nUnit: ${_unitController.text}\nLocation: ${_locationController.text}\nStatus: ${_statusController.text}';
+      await _saveToFile('locstat.txt', content);
+      await _shareFile('locstat.txt');
+    }
+  }
+
+  Future<void> _saveToFile(String filename, String content) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$filename');
+    await file.writeAsString(content);
+  }
+
+  Future<void> _shareFile(String filename) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$filename');
+    await Share.shareXFiles([XFile(file.path)], text: 'Military Report');
+  }
+}
+
+class CasevecForm extends StatefulWidget {
+  const CasevecForm({super.key});
+
+  @override
+  State<CasevecForm> createState() => _CasevecFormState();
+}
+
+class _CasevecFormState extends State<CasevecForm> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _patientController = TextEditingController();
+  final TextEditingController _injuryController = TextEditingController();
+  final TextEditingController _evacuationController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('CASEVEC Form'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              TextFormField(
+                controller: _patientController,
+                decoration: const InputDecoration(labelText: 'Patient Name'),
+                validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _injuryController,
+                decoration: const InputDecoration(labelText: 'Injury'),
+                validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _evacuationController,
+                decoration: const InputDecoration(labelText: 'Evacuation Status'),
+                validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              ElevatedButton(
+                onPressed: _saveAndShare,
+                child: const Text('Save and Share'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveAndShare() async {
+    if (_formKey.currentState!.validate()) {
+      String content = 'CASEVEC\nPatient: ${_patientController.text}\nInjury: ${_injuryController.text}\nEvacuation: ${_evacuationController.text}';
+      await _saveToFile('casevec.txt', content);
+      await _shareFile('casevec.txt');
+    }
+  }
+
+  Future<void> _saveToFile(String filename, String content) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$filename');
+    await file.writeAsString(content);
+  }
+
+  Future<void> _shareFile(String filename) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$filename');
+    await Share.shareXFiles([XFile(file.path)], text: 'Military Report');
   }
 }
